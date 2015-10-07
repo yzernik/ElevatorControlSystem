@@ -68,10 +68,10 @@ class Elevator(id: Int, numFloors: Int, controlSystem: ElevatorControlSystem) {
   private var passengers: Set[Passenger] = Set.empty
   private var loadingDirection: Option[Direction] = None
 
-  controlSystem.update(status)
+  controlSystem.update(id, status)
 
   def step = {
-    controlSystem.update(status)
+    controlSystem.update(id, status)
     val cmd = controlSystem.getCommand(id)
     cmd match {
       case Move(Up) =>
@@ -88,7 +88,7 @@ class Elevator(id: Int, numFloors: Int, controlSystem: ElevatorControlSystem) {
   }
 
   def status =
-    ElevatorStatus(id, currentFloor, goalFloors, direction, isLoading)
+    ElevatorStatus(currentFloor, goalFloors, direction, isLoading)
 
   /* Returns the passengers that were loaded */
   def load(ps: Seq[Passenger]): Seq[Passenger] = {

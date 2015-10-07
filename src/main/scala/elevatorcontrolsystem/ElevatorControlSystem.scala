@@ -8,15 +8,14 @@ import ElevatorControlSystem._
  */
 trait ElevatorControlSystem {
   def status: Seq[ElevatorStatus]
-  def update(status: ElevatorStatus): Unit
+  def update(id: Int, status: ElevatorStatus): Unit
   def requestPickup(floor: Int, direction: Direction): Unit
   def getCommand(id: Int): ElevatorCommand
 }
 
 object ElevatorControlSystem {
 
-  case class ElevatorStatus(id: Int,
-                            floor: Int,
+  case class ElevatorStatus(floor: Int,
                             goals: List[Int],
                             direction: Option[Direction],
                             isLoading: Boolean)
@@ -58,8 +57,8 @@ abstract class BaseControlSystem extends ElevatorControlSystem {
       getFreeCommand(s)
   }
 
-  override def update(status: ElevatorStatus) =
-    elevators += status.id -> status
+  override def update(id: Int, status: ElevatorStatus) =
+    elevators += id -> status
 
   def getBusyCommand(s: ElevatorStatus) =
     if (isAtGoal(s) || isAtPickup(s))

@@ -3,12 +3,12 @@
 
 ### Interfaces
 
-There is one main interfaces. The ElevatorControlSystem
+There is one main interface. The ElevatorControlSystem
 
 ```Scala
 trait ElevatorControlSystem {
   def status: Seq[ElevatorStatus]
-  def update(status: ElevatorStatus): Unit
+  def update(id: Int, status: ElevatorStatus): Unit
   def requestPickup(floor: Int, direction: Direction): Unit
   def getCommand(id: Int): ElevatorCommand
 }

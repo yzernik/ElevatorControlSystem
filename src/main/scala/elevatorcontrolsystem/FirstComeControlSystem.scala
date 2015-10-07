@@ -15,8 +15,8 @@ class FirstComeControlSystem extends BaseControlSystem {
   override def requestPickup(floor: Int, direction: Direction) =
     q.enqueue(PickupRequest(floor, direction))
 
-  override def update(status: ElevatorStatus) = {
-    super.update(status)
+  override def update(id: Int, status: ElevatorStatus) = {
+    super.update(id, status)
     q.dequeueAll(_.isPickupDone(status))
   }
 
