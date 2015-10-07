@@ -10,12 +10,13 @@ trait ElevatorControlSystem {
   def status: Seq[ElevatorStatus]
   def update(status: ElevatorStatus): Unit
   def requestPickup(floor: Int, direction: Direction): Unit
-  def step: Unit
+  def getCommand(id: Int): ElevatorCommand
 }
 
 object ElevatorControlSystem {
 
-  case class ElevatorStatus(floor: Int,
+  case class ElevatorStatus(id: Int,
+                            floor: Int,
                             goals: List[Int],
                             direction: Option[Direction],
                             isLoading: Boolean)
@@ -31,11 +32,9 @@ object ElevatorControlSystem {
   case object Up extends Direction
   case object Down extends Direction
 
-  trait ElevatorControl {
-    def move(direction: Direction): Unit
-    def openDoor(direction: Direction): Unit
-    def status: ElevatorStatus
-  }
+  sealed trait ElevatorCommand
+  case class Move(direction: Direction) extends ElevatorCommand
+  case class OpenDoor(direction: Direction) extends ElevatorCommand
 
 }
 
@@ -44,44 +43,43 @@ object ElevatorControlSystem {
  * Contains logic for moving elevators Up and Down
  * Does not implement the pickup scheduling strategy.
  */
-abstract class BaseControlSystem(elevators: Seq[ElevatorControl]) extends ElevatorControlSystem {
+abstract class BaseControlSystem extends ElevatorControlSystem {
+
+  private var elevators: Map[Int, ElevatorStatus] = Map.empty
 
   override def status =
-    elevators.map(_.status)
+    elevators.values.toVector
 
-  override def step = {
-    elevators.foreach(updateStatus)
-    elevators.foreach(moveElevator)
+  override def getCommand(id: Int) = {
+    val s = elevators.get(id).get
+    if (!s.goals.isEmpty)
+      getBusyCommand(s)
+    else
+      getFreeCommand(s)
   }
 
-  def moveElevator(e: ElevatorControl) =
-    if (!e.status.goals.isEmpty)
-      moveBusyElevator(e)
+  override def update(status: ElevatorStatus) =
+    elevators += status.id -> status
+
+  def getBusyCommand(s: ElevatorStatus) =
+    if (isAtGoal(s) || isAtPickup(s))
+      OpenDoor(s.direction.get)
     else
-      moveFreeElevator(e)
+      Move(s.direction.get)
 
-  def moveBusyElevator(e: ElevatorControl) =
-    if (isAtGoal(e) || isAtPickup(e))
-      e.openDoor(e.status.direction.get)
+  def getFreeCommand(s: ElevatorStatus): ElevatorCommand
+
+  def moveToPickup(s: ElevatorStatus, floor: Int, direction: Direction) =
+    if (floor > s.floor)
+      Move(Up)
+    else if (floor < s.floor)
+      Move(Down)
     else
-      e.move(e.status.direction.get)
+      OpenDoor(direction)
 
-  def moveToPickup(e: ElevatorControl, floor: Int, direction: Direction) =
-    if (floor > e.status.floor)
-      e.move(Up)
-    else if (floor < e.status.floor)
-      e.move(Down)
-    else
-      e.openDoor(direction)
+  def isAtGoal(s: ElevatorStatus) =
+    s.goals.contains(s.floor)
 
-  def isAtGoal(e: ElevatorControl) =
-    e.status.goals.contains(e.status.floor)
-
-  def updateStatus(e: ElevatorControl) =
-    update(e.status)
-
-  def moveFreeElevator(e: ElevatorControl): Unit
-
-  def isAtPickup(e: ElevatorControl): Boolean
+  def isAtPickup(s: ElevatorStatus): Boolean
 
 }

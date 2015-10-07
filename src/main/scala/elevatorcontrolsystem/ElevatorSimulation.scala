@@ -11,10 +11,10 @@ object ElevatorSimulation extends App {
 
   val NUMFLOORS = 10
 
-  val elevators = (1 to 3).map(new Elevator(_, NUMFLOORS))
-
   //val system = new FirstComeControlSystem(elevators)
-  val system = new FirstDirectionFirstControlSystem(elevators)
+  val system = new FirstDirectionFirstControlSystem()
+
+  val elevators = (1 to 3).map(new Elevator(_, NUMFLOORS, system))
 
   val building = new Building(system, elevators)
 
@@ -25,7 +25,7 @@ object ElevatorSimulation extends App {
 
   while (true) {
     println(system.status)
-    system.step
+    elevators.foreach(_.step)
     building.update
     readLine()
   }
@@ -62,29 +62,33 @@ class Building(system: ElevatorControlSystem,
 
 }
 
-class Elevator(id: Int, numFloors: Int) extends ElevatorControl {
+class Elevator(id: Int, numFloors: Int, controlSystem: ElevatorControlSystem) {
 
   private var currentFloor: Int = 0
   private var passengers: Set[Passenger] = Set.empty
   private var loadingDirection: Option[Direction] = None
 
-  override def move(direction: Direction) = {
-    loadingDirection = None
-    direction match {
-      case Up =>
+  controlSystem.update(status)
+
+  def step = {
+    controlSystem.update(status)
+    val cmd = controlSystem.getCommand(id)
+    cmd match {
+      case Move(Up) =>
+        loadingDirection = None
         if (currentFloor < numFloors - 1)
           currentFloor += 1
-      case Down =>
+      case Move(Down) =>
+        loadingDirection = None
         if (currentFloor > 0)
           currentFloor -= 1
+      case OpenDoor(direction) =>
+        loadingDirection = Some(direction)
     }
   }
 
-  override def openDoor(direction: Direction) =
-    loadingDirection = Some(direction)
-
-  override def status =
-    ElevatorStatus(currentFloor, goalFloors, direction, isLoading)
+  def status =
+    ElevatorStatus(id, currentFloor, goalFloors, direction, isLoading)
 
   /* Returns the passengers that were loaded */
   def load(ps: Seq[Passenger]): Seq[Passenger] = {

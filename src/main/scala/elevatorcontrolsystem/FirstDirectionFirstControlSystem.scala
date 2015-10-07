@@ -9,28 +9,31 @@ import ElevatorControlSystem._
  * oldest unfulfilled request. Chooses the lowest Up request
  * or the highest Down request for the next pickup point.
  */
-class FirstDirectionFirstControlSystem(elevators: Seq[ElevatorControl])
-    extends BaseControlSystem(elevators) {
+class FirstDirectionFirstControlSystem extends BaseControlSystem {
 
   val q = Queue.empty[PickupRequest]
 
   override def requestPickup(floor: Int, direction: Direction) =
     q.enqueue(PickupRequest(floor, direction))
 
-  override def update(status: ElevatorStatus) =
+  override def update(status: ElevatorStatus) = {
+    super.update(status)
     q.dequeueAll(_.isPickupDone(status))
+  }
 
-  override def moveFreeElevator(e: ElevatorControl) =
+  override def getFreeCommand(s: ElevatorStatus) =
     if (!q.isEmpty)
       q.head.direction match {
         case Up =>
-          moveToPickup(e, lowestUpRequest.floor, Up)
+          moveToPickup(s, lowestUpRequest.floor, Up)
         case Down =>
-          moveToPickup(e, highestDownRequest.floor, Down)
+          moveToPickup(s, highestDownRequest.floor, Down)
       }
+    else
+      OpenDoor(Up)
 
-  override def isAtPickup(e: ElevatorControl) =
-    q.contains(PickupRequest(e.status.floor, e.status.direction.get))
+  override def isAtPickup(s: ElevatorStatus) =
+    q.contains(PickupRequest(s.floor, s.direction.get))
 
   def lowestUpRequest =
     q.filter(_.direction == Up)

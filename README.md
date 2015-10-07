@@ -3,24 +3,14 @@
 
 ### Interfaces
 
-There are two main interfaces. The ElevatorControlSystem
+There is one main interfaces. The ElevatorControlSystem
 
 ```Scala
 trait ElevatorControlSystem {
   def status: Seq[ElevatorStatus]
   def update(status: ElevatorStatus): Unit
   def requestPickup(floor: Int, direction: Direction): Unit
-  def step: Unit
-}
-```
-
-and the ElevatorControl
-
-```Scala
-trait ElevatorControl {
-  def move(direction: Direction): Unit
-  def openDoor(direction: Direction): Unit
-  def status: ElevatorStatus
+  def getCommand(id: Int): ElevatorCommand
 }
 ```
 
@@ -36,7 +26,13 @@ case class ElevatorStatus(floor: Int,
 
 ### Data Structures
 
-The `ElevatorControlSystem` needs to have a representation of the 
+
+
+The `ElevatorControlSystem` stores the current status of the elevators in a 
+map with the id of the elevator as the key, and the status as the value.
+
+
+The `ElevatorControlSystem` also has a representation of the 
 `PickupRequest`'s that have been made. I use Scala's mutable Queue to store 
 the pickup requests.
 
@@ -45,8 +41,7 @@ passengers. I use a Set to represent the set of passengers on the elevator.
 
 ### Algorithm
 
-On each step, each elevator can move up, move down, open the door, or 
-do nothing.
+On each step, each elevator can move up, move down, or open the door.
 
 For an elevator that has passengers
 
@@ -57,7 +52,7 @@ For an elevator that has passengers
 For an elevator that has no passengers
 
 * If there are any pickup requests, move to one of them and then open the door
-* otherwise, do nothing.
+* otherwise, open the door.
 
 The scheduling algorithm depends on the choice of which pickup request will be 
 chosen by an empty elevator. My algorithm chooses either the lowest Up request, 
