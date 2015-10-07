@@ -4,7 +4,6 @@ import ElevatorControlSystem._
 
 /**
  * Interface for the Elevator Control System.
- * Can be used to time-step by calling the step method.
  */
 trait ElevatorControlSystem {
   def status: Seq[ElevatorStatus]
